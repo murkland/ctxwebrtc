@@ -1,4 +1,4 @@
-module github.com/nbarena/ctxwebrtc
+module github.com/undernet/ctxwebrtc
 
 go 1.18
 
