@@ -9,6 +9,7 @@ import (
 
 type DataChannel struct {
 	dc            *webrtc.DataChannel
+	err           error
 	ready         chan struct{}
 	closed        chan struct{}
 	sendMore      chan struct{}
@@ -20,6 +21,9 @@ type DataChannel struct {
 func (c *DataChannel) Send(ctx context.Context, buf []byte) error {
 	select {
 	case <-c.closed:
+		if c.err != nil {
+			return c.err
+		}
 		return net.ErrClosed
 	case <-c.ready:
 	case <-ctx.Done():
@@ -39,10 +43,13 @@ func (c *DataChannel) Send(ctx context.Context, buf []byte) error {
 
 func (c *DataChannel) Recv(ctx context.Context) ([]byte, error) {
 	select {
+	case <-c.closed:
+		if c.err != nil {
+			return c.err
+		}
+		return nil, net.ErrClosed
 	case buf := <-c.recvBuf:
 		return buf, nil
-	case <-c.closed:
-		return nil, net.ErrClosed
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
@@ -63,6 +70,10 @@ func WrapDataChannel(dc *webrtc.DataChannel, options ...func(*DataChannel)) *Dat
 	ch.dc.SetBufferedAmountLowThreshold(uint64(ch.lowWaterMark))
 	ch.dc.OnOpen(func() {
 		close(ch.ready)
+	})
+	ch.dc.OnError(func(err error) {
+		ch.err = err
+		close(ch.closed)
 	})
 	ch.dc.OnMessage(func(msg webrtc.DataChannelMessage) {
 		ch.recvBuf <- msg.Data
