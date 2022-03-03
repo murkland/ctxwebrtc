@@ -45,7 +45,7 @@ func (c *DataChannel) Recv(ctx context.Context) ([]byte, error) {
 	select {
 	case <-c.closed:
 		if c.err != nil {
-			return c.err
+			return nil, c.err
 		}
 		return nil, net.ErrClosed
 	case buf := <-c.recvBuf:
@@ -63,7 +63,7 @@ const defaultLowWaterMark = 512 * 1024   // 512KB
 const defaultHighWaterMark = 1024 * 1024 // 1MB
 
 func WrapDataChannel(dc *webrtc.DataChannel, options ...func(*DataChannel)) *DataChannel {
-	ch := &DataChannel{dc, make(chan struct{}), make(chan struct{}), make(chan struct{}), make(chan []byte), defaultLowWaterMark, defaultHighWaterMark}
+	ch := &DataChannel{dc, nil, make(chan struct{}), make(chan struct{}), make(chan struct{}), make(chan []byte), defaultLowWaterMark, defaultHighWaterMark}
 	for _, opt := range options {
 		opt(ch)
 	}

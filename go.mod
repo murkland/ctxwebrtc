@@ -1,4 +1,4 @@
-module github.com/yumland/ctxwebrtc
+module github.com/murkland/ctxwebrtc
 
 go 1.18
 
