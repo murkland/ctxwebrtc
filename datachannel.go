@@ -71,10 +71,6 @@ func WrapDataChannel(dc *webrtc.DataChannel, options ...func(*DataChannel)) *Dat
 	ch.dc.OnOpen(func() {
 		close(ch.ready)
 	})
-	ch.dc.OnError(func(err error) {
-		ch.err = err
-		close(ch.closed)
-	})
 	ch.dc.OnMessage(func(msg webrtc.DataChannelMessage) {
 		ch.recvBuf <- msg.Data
 	})
